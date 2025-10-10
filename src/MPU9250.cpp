@@ -38,75 +38,64 @@ void MPU9250::setup() {
     Wire.endTransmission(true);
 }
 
+void MPU9250::calibrateAccelGyro() {
+    _axOffset = readValue(ACCEL_XOUT_H, true);
+    _ayOffset = readValue(ACCEL_YOUT_H, true);
+    _azOffset = readValue(ACCEL_ZOUT_H, true);
+
+    _gxOffset = readValue(GYRO_XOUT_H, true);
+    _gyOffset = readValue(GYRO_YOUT_H, true);
+    _gzOffset = readValue(GYRO_ZOUT_H, true);
+}
+
 int16_t MPU9250::readRawAccelX() {
-    return readValueHighByteFirst(
-        ACCEL_XOUT_H
-    );
+    return readValue(ACCEL_XOUT_H, true) - _axOffset;
 }
 
 int16_t MPU9250::readRawAccelY() {
-    return readValueHighByteFirst(
-        ACCEL_YOUT_H
-    );
+    return readValue(ACCEL_YOUT_H, true) - _ayOffset;
 }
 
 int16_t MPU9250::readRawAccelZ() {
-    return readValueHighByteFirst(
-        ACCEL_ZOUT_H
-    );
+    return readValue(ACCEL_ZOUT_H, true) - _azOffset;
 }
 
 int16_t MPU9250::readRawGyroX() {
-    return readValueHighByteFirst(
-        GYRO_XOUT_H
-    );
+    return readValue(GYRO_XOUT_H, true) - _gxOffset;;
 }
 int16_t MPU9250::readRawGyroY() {
-    return readValueHighByteFirst(
-        GYRO_YOUT_H
-    );
+    return readValue(GYRO_YOUT_H, true) - _gyOffset;;
 }
 
 int16_t MPU9250::readRawGyroZ() {
-    return readValueHighByteFirst(
-        GYRO_ZOUT_H
-    );
+    return readValue(GYRO_ZOUT_H, true) - _gzOffset;;
 }
 
 int16_t MPU9250::readRawMagX() {
-    return readValueLowByteFirst(
-        MAG_XOUT_L
-    );
+    return readValue(MAG_XOUT_L, false);
 }
 
 int16_t MPU9250::readRawMagY() {
-    return readValueLowByteFirst(
-        MAG_YOUT_L
-    );
+    return readValue(MAG_YOUT_L, false);
 }
 
 int16_t MPU9250::readRawMagZ() {
-    return readValueLowByteFirst(
-        MAG_ZOUT_L
-    );
+    return readValue(MAG_ZOUT_L, false);
 }
 
-int16_t MPU9250::readValueHighByteFirst(
-    uint8_t highByteRegister
+int16_t MPU9250::readValue(
+    uint8_t registerAddress,
+    bool highByteFirst
 ) {
     request2ByteData(
-        highByteRegister
+        registerAddress
     );
-    return Wire.read() <<8 | Wire.read();
-}
-
-int16_t MPU9250::readValueLowByteFirst(
-    uint8_t lowByteRegister
-) {
-    request2ByteData(
-        lowByteRegister
-    );
-    return Wire.read() | Wire.read() << 8;
+    
+    if (highByteFirst) {
+        return Wire.read() << 8 | Wire.read();
+    } else {
+        return Wire.read() |Wire.read() << 8;
+    }
 }
 
 void MPU9250::request2ByteData(

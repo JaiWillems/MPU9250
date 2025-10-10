@@ -49,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class MPU9250 {
     public:
         void setup();
+        void calibrateAccelGyro();
         int16_t readRawAccelX();
         int16_t readRawAccelY();;
         int16_t readRawAccelZ();;
@@ -59,11 +60,15 @@ class MPU9250 {
         int16_t readRawMagY();
         int16_t readRawMagZ();
     private:
-        int16_t readValueHighByteFirst(
-            uint8_t highByteRegister
-        );
-        int16_t readValueLowByteFirst(
-            uint8_t lowByteRegister
+        int16_t _axOffset;
+        int16_t _ayOffset;
+        int16_t _azOffset;
+        int16_t _gxOffset;
+        int16_t _gyOffset;
+        int16_t _gzOffset;
+        int16_t readValue(
+            uint8_t registerAddress,
+            bool highByteFirst
         );
         void request2ByteData(
             uint8_t registerAddress
