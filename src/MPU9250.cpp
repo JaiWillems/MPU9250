@@ -32,10 +32,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MPU9250.h"
 
 void MPU9250::setup() {
-    Wire.beginTransmission(MPU_ADDRESS);
-    Wire.write(PWR_MGMT_1);
-    Wire.write(0x00);
-    Wire.endTransmission(true);
+    writeToRegister(PWR_MGMT_1, 0x00);
+
+    writeToRegister(ACCEL_CONFIG, 0x00);
+    writeToRegister(GYRO_CONFIG, 0x00);
+    writeToRegister(CONFIG, 0x03);
+    writeToRegister(SMPLRT_DIV, 0x09);
 }
 
 void MPU9250::calibrateAccelGyro() {
@@ -48,39 +50,50 @@ void MPU9250::calibrateAccelGyro() {
     _gzOffset = readValue(GYRO_ZOUT_H, true);
 }
 
-int16_t MPU9250::readRawAccelX() {
-    return readValue(ACCEL_XOUT_H, true) - _axOffset;
+float MPU9250::readAccelX() {
+    return (readValue(ACCEL_XOUT_H, true) - _axOffset) / ACCEL_SENSITIVITY_FACTOR;
 }
 
-int16_t MPU9250::readRawAccelY() {
-    return readValue(ACCEL_YOUT_H, true) - _ayOffset;
+float MPU9250::readAccelY() {
+    return (readValue(ACCEL_YOUT_H, true) - _ayOffset) / ACCEL_SENSITIVITY_FACTOR;
 }
 
-int16_t MPU9250::readRawAccelZ() {
-    return readValue(ACCEL_ZOUT_H, true) - _azOffset;
+float MPU9250::readAccelZ() {
+    return (readValue(ACCEL_ZOUT_H, true) - _azOffset) / ACCEL_SENSITIVITY_FACTOR;
 }
 
-int16_t MPU9250::readRawGyroX() {
-    return readValue(GYRO_XOUT_H, true) - _gxOffset;;
-}
-int16_t MPU9250::readRawGyroY() {
-    return readValue(GYRO_YOUT_H, true) - _gyOffset;;
+float MPU9250::readGyroX() {
+    return (readValue(GYRO_XOUT_H, true) - _gxOffset) / GYRO_SENSITIVITY_FACTOR;
 }
 
-int16_t MPU9250::readRawGyroZ() {
-    return readValue(GYRO_ZOUT_H, true) - _gzOffset;;
+float MPU9250::readGyroY() {
+    return (readValue(GYRO_YOUT_H, true) - _gyOffset) / GYRO_SENSITIVITY_FACTOR;
 }
 
-int16_t MPU9250::readRawMagX() {
+float MPU9250::readGyroZ() {
+    return (readValue(GYRO_ZOUT_H, true) - _gzOffset) / GYRO_SENSITIVITY_FACTOR;
+}
+
+int16_t MPU9250::readMagX() {
     return readValue(MAG_XOUT_L, false);
 }
 
-int16_t MPU9250::readRawMagY() {
+int16_t MPU9250::readMagY() {
     return readValue(MAG_YOUT_L, false);
 }
 
-int16_t MPU9250::readRawMagZ() {
+int16_t MPU9250::readMagZ() {
     return readValue(MAG_ZOUT_L, false);
+}
+
+void MPU9250::writeToRegister(
+    uint8_t registerAddress,
+    int16_t data
+) {
+    Wire.beginTransmission(MPU_ADDRESS);
+    Wire.write(registerAddress);
+    Wire.write(data);
+    Wire.endTransmission(true);
 }
 
 int16_t MPU9250::readValue(

@@ -34,6 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MPU_ADDRESS 0x68
 #define PWR_MGMT_1 0x6B
 
+#define ACCEL_CONFIG 0x1C
+#define GYRO_CONFIG 0x1B
+#define CONFIG 0x1A
+#define SMPLRT_DIV 0x19
+
 #define ACCEL_XOUT_H 0x3B
 #define ACCEL_YOUT_H 0x3D
 #define ACCEL_ZOUT_H 0x3F
@@ -46,19 +51,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAG_YOUT_L 0x05
 #define MAG_ZOUT_L 0x07
 
+#define ACCEL_SENSITIVITY_FACTOR 16384.0
+#define GYRO_SENSITIVITY_FACTOR 131.0
+
 class MPU9250 {
     public:
         void setup();
         void calibrateAccelGyro();
-        int16_t readRawAccelX();
-        int16_t readRawAccelY();;
-        int16_t readRawAccelZ();;
-        int16_t readRawGyroX();
-        int16_t readRawGyroY();
-        int16_t readRawGyroZ();
-        int16_t readRawMagX();
-        int16_t readRawMagY();
-        int16_t readRawMagZ();
+        float readAccelX();
+        float readAccelY();
+        float readAccelZ();
+        float readGyroX();
+        float readGyroY();
+        float readGyroZ();
+        int16_t readMagX();
+        int16_t readMagY();
+        int16_t readMagZ();
     private:
         int16_t _axOffset;
         int16_t _ayOffset;
@@ -66,6 +74,10 @@ class MPU9250 {
         int16_t _gxOffset;
         int16_t _gyOffset;
         int16_t _gzOffset;
+        void writeToRegister(
+            uint8_t registerAddress,
+            int16_t data
+        );
         int16_t readValue(
             uint8_t registerAddress,
             bool highByteFirst
