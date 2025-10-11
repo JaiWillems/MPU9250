@@ -40,14 +40,36 @@ void MPU9250::setup() {
     writeToRegister(SMPLRT_DIV, 0x09);
 }
 
-void MPU9250::calibrateAccelGyro() {
-    _axOffset = readValue(ACCEL_XOUT_H, true);
-    _ayOffset = readValue(ACCEL_YOUT_H, true);
-    _azOffset = readValue(ACCEL_ZOUT_H, true);
+void MPU9250::calibrateAccel() {
+    int samples = NUMBER_OF_CALIBRATION_SAMPLES;
+    for (int i = 0; i < samples; i++) {
+        _axOffset += readValue(ACCEL_XOUT_H, true);
+        _ayOffset += readValue(ACCEL_YOUT_H, true);
+        _azOffset += readValue(ACCEL_ZOUT_H, true);
+    }
 
-    _gxOffset = readValue(GYRO_XOUT_H, true);
-    _gyOffset = readValue(GYRO_YOUT_H, true);
-    _gzOffset = readValue(GYRO_ZOUT_H, true);
+    _axOffset /= samples;
+    _ayOffset /= samples;
+    _azOffset /= samples;
+
+    // Add 1G offset for the gravity vector;
+    _azOffset -= 1.0;
+}
+
+float MPU9250::getPitch() {
+    float ax = readAccelX();
+    float ay = readAccelY();
+    float az = readAccelZ();
+
+    return atan2(ax, sqrt(ay * ay + az * az)) * 180.0 / PI;
+}
+
+float MPU9250::getRoll() {
+    float ax = readAccelX();
+    float ay = readAccelY();
+    float az = readAccelZ();
+    
+    return atan2(ay, az) * 180.0 / PI;
 }
 
 float MPU9250::readAccelX() {
@@ -63,15 +85,15 @@ float MPU9250::readAccelZ() {
 }
 
 float MPU9250::readGyroX() {
-    return (readValue(GYRO_XOUT_H, true) - _gxOffset) / GYRO_SENSITIVITY_FACTOR;
+    return readValue(GYRO_XOUT_H, true) / GYRO_SENSITIVITY_FACTOR;
 }
 
 float MPU9250::readGyroY() {
-    return (readValue(GYRO_YOUT_H, true) - _gyOffset) / GYRO_SENSITIVITY_FACTOR;
+    return readValue(GYRO_YOUT_H, true) / GYRO_SENSITIVITY_FACTOR;
 }
 
 float MPU9250::readGyroZ() {
-    return (readValue(GYRO_ZOUT_H, true) - _gzOffset) / GYRO_SENSITIVITY_FACTOR;
+    return readValue(GYRO_ZOUT_H, true) / GYRO_SENSITIVITY_FACTOR;
 }
 
 int16_t MPU9250::readMagX() {

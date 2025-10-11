@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <Arduino.h>
 #include <Wire.h>
 
 #define MPU_ADDRESS 0x68
@@ -54,10 +55,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ACCEL_SENSITIVITY_FACTOR 16384.0
 #define GYRO_SENSITIVITY_FACTOR 131.0
 
+#define NUMBER_OF_CALIBRATION_SAMPLES 100;
+
 class MPU9250 {
     public:
         void setup();
-        void calibrateAccelGyro();
+        void calibrateAccel();
+        float getPitch();
+        float getRoll();
         float readAccelX();
         float readAccelY();
         float readAccelZ();
@@ -71,9 +76,6 @@ class MPU9250 {
         int16_t _axOffset;
         int16_t _ayOffset;
         int16_t _azOffset;
-        int16_t _gxOffset;
-        int16_t _gyOffset;
-        int16_t _gzOffset;
         void writeToRegister(
             uint8_t registerAddress,
             int16_t data
