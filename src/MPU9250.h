@@ -72,21 +72,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class MPU9250 {
     public:
         void setup();
-        void calibrateAccel();
+        void calibrateAccelGyro();
         float getPitch();
         float getRoll();
         Vector3D getAccel();
         Vector3D getRawAccel();
-        float readGyroX();
-        float readGyroY();
-        float readGyroZ();
+        Vector3D getGyro();
+        Vector3D getRawGyro();
         int16_t readMagX();
         int16_t readMagY();
         int16_t readMagZ();
     private:
-        int16_t _axOffset;
-        int16_t _ayOffset;
-        int16_t _azOffset;
+        long _axOffset;
+        long _ayOffset;
+        long _azOffset;
+        long _gxOffset;
+        long _gyOffset;
+        long _gzOffset;
         void writeByte(
             uint8_t i2cAddress,
             uint8_t registerAddress,
