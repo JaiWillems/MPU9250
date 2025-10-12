@@ -66,6 +66,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ACCEL_SENSITIVITY_FACTOR 16384.0
 #define GYRO_SENSITIVITY_FACTOR 131.0
+#define MAG_SCALING_FACTOR 0.15;
 
 #define NUMBER_OF_CALIBRATION_SAMPLES 100;
 
@@ -73,15 +74,15 @@ class MPU9250 {
     public:
         void setup();
         void calibrateAccelGyro();
+        float getYaw();
         float getPitch();
         float getRoll();
         Vector3D getAccel();
         Vector3D getRawAccel();
         Vector3D getGyro();
         Vector3D getRawGyro();
-        int16_t readMagX();
-        int16_t readMagY();
-        int16_t readMagZ();
+        Vector3D getMag();
+        Vector3D getRawMag();
     private:
         long _axOffset;
         long _ayOffset;
@@ -99,12 +100,5 @@ class MPU9250 {
             uint8_t registerAddress,
             uint8_t numberOfBytes,
             uint8_t* destination
-        );
-        int16_t readValue(
-            uint8_t registerAddress,
-            bool highByteFirst
-        );
-        void request2ByteData(
-            uint8_t registerAddress
         );
 };

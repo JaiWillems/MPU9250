@@ -85,6 +85,12 @@ void MPU9250::calibrateAccelGyro() {
     _gzOffset /= samples;
 }
 
+// TODO: Add tilt-compensation of move to a quaternion compass.
+float MPU9250::getYaw() {
+    Vector3D m = getMag();
+    return atan2(m.y, m.x) * 180.0 / PI;
+}
+
 float MPU9250::getPitch() {
     Vector3D a = getAccel();
     return atan2(-a.x, sqrt(a.y * a.y + a.z * a.z)) * 180.0 / PI;
@@ -92,7 +98,7 @@ float MPU9250::getPitch() {
 
 float MPU9250::getRoll() {
     Vector3D a = getAccel();
-    return atan2(a.y, a.z) * 180.0 / PI;
+    return atan2(a.y, sqrt(a.x * a.x + a.z * a.z)) * 180.0 / PI;
 }
 
 Vector3D MPU9250::getAccel() {
@@ -141,16 +147,29 @@ Vector3D MPU9250::getRawGyro() {
     return data;
 }
 
-int16_t MPU9250::readMagX() {
-    return readValue(MAG_XOUT_L, false);
+Vector3D MPU9250::getMag() {
+    Vector3D data = getRawMag();
+
+    Vector3D calibratedData;
+    calibratedData.x = data.x * MAG_SCALING_FACTOR;
+    calibratedData.y = data.y * MAG_SCALING_FACTOR;
+    calibratedData.z = data.z * MAG_SCALING_FACTOR;
+
+    return calibratedData;
 }
 
-int16_t MPU9250::readMagY() {
-    return readValue(MAG_YOUT_L, false);
-}
+Vector3D MPU9250::getRawMag() {
+    uint8_t buffer[7];
+    readBytes(AK8963_I2C_ADDRESS, MAG_XOUT_L, 7, buffer);
 
-int16_t MPU9250::readMagZ() {
-    return readValue(MAG_ZOUT_L, false);
+    Vector3D data;
+    data.x = buffer[0] | buffer[1] << 8;
+    data.y = buffer[2] | buffer[3] << 8;
+    data.z = buffer[4] | buffer[5] << 8;
+
+    // TODO: Check overflow byte (byte 7, register 0x09).
+
+    return data;
 }
 
 void MPU9250::writeByte(
@@ -178,28 +197,4 @@ void MPU9250::readBytes(
     for (int i = 0; i < numberOfBytes; i++) {
         destination[i] = Wire.read();
     }
-}
-
-int16_t MPU9250::readValue(
-    uint8_t registerAddress,
-    bool highByteFirst
-) {
-    request2ByteData(
-        registerAddress
-    );
-    
-    if (highByteFirst) {
-        return Wire.read() << 8 | Wire.read();
-    } else {
-        return Wire.read() |Wire.read() << 8;
-    }
-}
-
-void MPU9250::request2ByteData(
-    uint8_t registerAddress
-) {
-    Wire.beginTransmission(MPU9250_I2C_ADDRESS);
-    Wire.write(registerAddress);
-    Wire.endTransmission(false);
-    Wire.requestFrom(MPU9250_I2C_ADDRESS, 2, true);
 }
