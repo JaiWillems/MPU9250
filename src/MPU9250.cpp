@@ -32,56 +32,78 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MPU9250.h"
 
 void MPU9250::setup() {
-    writeToRegister(PWR_MGMT_1, 0x00);
+    Wire.begin();
 
-    writeToRegister(ACCEL_CONFIG, 0x00);
-    writeToRegister(GYRO_CONFIG, 0x00);
-    writeToRegister(CONFIG, 0x03);
-    writeToRegister(SMPLRT_DIV, 0x09);
+    writeByte(MPU9250_I2C_ADDRESS, PWR_MGMT_1, 0x00);
+    delay(100);
+
+    writeByte(MPU9250_I2C_ADDRESS, SMPLRT_DIV, 0x09);
+    delay(10);
+
+    writeByte(MPU9250_I2C_ADDRESS, CONFIG, 0x03);
+    delay(10);
+
+    writeByte(MPU9250_I2C_ADDRESS, GYRO_CONFIG, 0x00);
+    delay(10);
+
+    writeByte(MPU9250_I2C_ADDRESS, ACCEL_CONFIG, 0x00);
+    delay(10);
+
+    writeByte(MPU9250_I2C_ADDRESS, INT_PIN_CFG, 0x02);
+    delay(10);
+
+    writeByte(AK8963_I2C_ADDRESS, CNTL1, 0x00);
+    delay(10);
+
+    writeByte(AK8963_I2C_ADDRESS, CNTL1, 0x16);
+    delay(10);
 }
 
 void MPU9250::calibrateAccel() {
     int samples = NUMBER_OF_CALIBRATION_SAMPLES;
     for (int i = 0; i < samples; i++) {
-        _axOffset += readValue(ACCEL_XOUT_H, true);
-        _ayOffset += readValue(ACCEL_YOUT_H, true);
-        _azOffset += readValue(ACCEL_ZOUT_H, true);
+        Vector3D data = getRawAccel();
+        _axOffset += data.x;
+        _ayOffset += data.y;
+        _azOffset += data.z;
     }
 
     _axOffset /= samples;
     _ayOffset /= samples;
     _azOffset /= samples;
-
-    // Add 1G offset for the gravity vector;
-    _azOffset -= 1.0;
 }
 
 float MPU9250::getPitch() {
-    float ax = readAccelX();
-    float ay = readAccelY();
-    float az = readAccelZ();
-
-    return atan2(ax, sqrt(ay * ay + az * az)) * 180.0 / PI;
+    Vector3D a = getRawAccel();
+    return atan2(a.x, sqrt(a.y * a.y + a.z * a.z)) * 180.0 / PI;
 }
 
 float MPU9250::getRoll() {
-    float ax = readAccelX();
-    float ay = readAccelY();
-    float az = readAccelZ();
-    
-    return atan2(ay, az) * 180.0 / PI;
+    Vector3D a = getAccel();
+    return atan2(a.y, a.z) * 180.0 / PI;
 }
 
-float MPU9250::readAccelX() {
-    return (readValue(ACCEL_XOUT_H, true) - _axOffset) / ACCEL_SENSITIVITY_FACTOR;
+Vector3D MPU9250::getAccel() {
+    Vector3D data = getRawAccel();
+
+    Vector3D calibratedData;
+    calibratedData.x = (data.x - _axOffset) / ACCEL_SENSITIVITY_FACTOR;
+    calibratedData.y = (data.y - _ayOffset) / ACCEL_SENSITIVITY_FACTOR;
+    calibratedData.z = (data.z - _azOffset) / ACCEL_SENSITIVITY_FACTOR;
+
+    return calibratedData;
 }
 
-float MPU9250::readAccelY() {
-    return (readValue(ACCEL_YOUT_H, true) - _ayOffset) / ACCEL_SENSITIVITY_FACTOR;
-}
+Vector3D MPU9250::getRawAccel() {
+    uint8_t buffer[6];
+    readBytes(MPU9250_I2C_ADDRESS, ACCEL_XOUT_H, 6, buffer);
 
-float MPU9250::readAccelZ() {
-    return (readValue(ACCEL_ZOUT_H, true) - _azOffset) / ACCEL_SENSITIVITY_FACTOR;
+    Vector3D data;
+    data.x = buffer[0] << 8 | buffer[1];
+    data.y = buffer[2] << 8 | buffer[3];
+    data.z = buffer[4] << 8 | buffer[5];
+
+    return data;
 }
 
 float MPU9250::readGyroX() {
@@ -108,14 +130,31 @@ int16_t MPU9250::readMagZ() {
     return readValue(MAG_ZOUT_L, false);
 }
 
-void MPU9250::writeToRegister(
+void MPU9250::writeByte(
+    uint8_t i2cAddress,
     uint8_t registerAddress,
     int16_t data
 ) {
-    Wire.beginTransmission(MPU_ADDRESS);
+    Wire.beginTransmission(i2cAddress);
     Wire.write(registerAddress);
     Wire.write(data);
     Wire.endTransmission(true);
+}
+
+void MPU9250::readBytes(
+    uint8_t i2cAddress,
+    uint8_t registerAddress,
+    uint8_t numberOfBytes,
+    uint8_t* destination
+) {
+    Wire.beginTransmission(i2cAddress);
+    Wire.write(registerAddress);
+    Wire.endTransmission(false);
+    Wire.requestFrom(i2cAddress, numberOfBytes);
+    
+    for (int i = 0; i < numberOfBytes; i++) {
+        destination[i] = Wire.read();
+    }
 }
 
 int16_t MPU9250::readValue(
@@ -136,8 +175,8 @@ int16_t MPU9250::readValue(
 void MPU9250::request2ByteData(
     uint8_t registerAddress
 ) {
-    Wire.beginTransmission(MPU_ADDRESS);
+    Wire.beginTransmission(MPU9250_I2C_ADDRESS);
     Wire.write(registerAddress);
     Wire.endTransmission(false);
-    Wire.requestFrom(MPU_ADDRESS, 2, true);
+    Wire.requestFrom(MPU9250_I2C_ADDRESS, 2, true);
 }

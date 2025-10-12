@@ -31,14 +31,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Arduino.h>
 #include <Wire.h>
+#include "Types.h"
 
-#define MPU_ADDRESS 0x68
+// MPU9250 addresses.
+
+#define MPU9250_I2C_ADDRESS 0x68
 #define PWR_MGMT_1 0x6B
 
-#define ACCEL_CONFIG 0x1C
-#define GYRO_CONFIG 0x1B
-#define CONFIG 0x1A
 #define SMPLRT_DIV 0x19
+#define CONFIG 0x1A
+#define GYRO_CONFIG 0x1B
+#define ACCEL_CONFIG 0x1C
+#define INT_PIN_CFG 0x37
 
 #define ACCEL_XOUT_H 0x3B
 #define ACCEL_YOUT_H 0x3D
@@ -48,9 +52,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define GYRO_YOUT_H 0x45
 #define GYRO_ZOUT_H 0x47
 
+// AK8963 addresses.
+
+#define AK8963_I2C_ADDRESS 0x0C
+
+#define CNTL1 0x0A
+
 #define MAG_XOUT_L 0x03
 #define MAG_YOUT_L 0x05
 #define MAG_ZOUT_L 0x07
+
+// Settings.
 
 #define ACCEL_SENSITIVITY_FACTOR 16384.0
 #define GYRO_SENSITIVITY_FACTOR 131.0
@@ -63,9 +75,8 @@ class MPU9250 {
         void calibrateAccel();
         float getPitch();
         float getRoll();
-        float readAccelX();
-        float readAccelY();
-        float readAccelZ();
+        Vector3D getAccel();
+        Vector3D getRawAccel();
         float readGyroX();
         float readGyroY();
         float readGyroZ();
@@ -76,9 +87,16 @@ class MPU9250 {
         int16_t _axOffset;
         int16_t _ayOffset;
         int16_t _azOffset;
-        void writeToRegister(
+        void writeByte(
+            uint8_t i2cAddress,
             uint8_t registerAddress,
             int16_t data
+        );
+        void readBytes(
+            uint8_t i2cAddress,
+            uint8_t registerAddress,
+            uint8_t numberOfBytes,
+            uint8_t* destination
         );
         int16_t readValue(
             uint8_t registerAddress,
