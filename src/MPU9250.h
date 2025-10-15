@@ -66,14 +66,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ACCEL_SENSITIVITY_FACTOR 16384.0
 #define GYRO_SENSITIVITY_FACTOR 131.0
-#define MAG_SCALING_FACTOR 0.15;
+#define MAG_SCALING_FACTOR 0.15
 
-#define NUMBER_OF_CALIBRATION_SAMPLES 100;
+#define NUMBER_OF_CALIBRATION_SAMPLES 100
+#define MAG_CALIBRATION_TIME_MS 20000
 
 class MPU9250 {
     public:
         void setup();
         void calibrateAccelGyro();
+        void calibrateMag();
         float getYaw();
         float getPitch();
         float getRoll();
@@ -90,6 +92,15 @@ class MPU9250 {
         long _gxOffset;
         long _gyOffset;
         long _gzOffset;
+        long _mxMean;
+        int16_t _mxMin;
+        int16_t _mxMax;
+        long _myMean;
+        int16_t _myMin;
+        int16_t _myMax;
+        long _mzMean;
+        int16_t _mzMin;
+        int16_t _mzMax;
         void writeByte(
             uint8_t i2cAddress,
             uint8_t registerAddress,

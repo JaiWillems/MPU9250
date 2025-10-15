@@ -85,6 +85,34 @@ void MPU9250::calibrateAccelGyro() {
     _gzOffset /= samples;
 }
 
+void MPU9250::calibrateMag() {
+    uint16_t samples = 0;
+    unsigned long startTime = millis();
+    while (millis() - startTime < MAG_CALIBRATION_TIME_MS) {
+        Vector3D data = getRawMag();
+
+        _mxMean += data.x;
+        if (data.x < _mxMin) _mxMin = data.x;
+        if (data.x > _mxMax) _mxMax = data.x;
+
+        _myMean += data.y;
+        if (data.y < _myMin) _myMin = data.y;
+        if (data.y > _myMax) _myMax = data.y;
+
+        _mzMean += data.z;
+        if (data.z < _mzMin) _mzMin = data.z;
+        if (data.z > _mzMax) _mzMax = data.z;
+
+        samples += 1;
+
+        delay(10);
+    }
+
+    _mxMean /= samples;
+    _myMean /= samples;
+    _mzMean /= samples;
+}
+
 // TODO: Add tilt-compensation of move to a quaternion compass.
 float MPU9250::getYaw() {
     Vector3D m = getMag();
@@ -151,9 +179,9 @@ Vector3D MPU9250::getMag() {
     Vector3D data = getRawMag();
 
     Vector3D calibratedData;
-    calibratedData.x = data.x * MAG_SCALING_FACTOR;
-    calibratedData.y = data.y * MAG_SCALING_FACTOR;
-    calibratedData.z = data.z * MAG_SCALING_FACTOR;
+    calibratedData.x = 2 * MAG_SCALING_FACTOR * (data.x - _mxMean) / (_mxMax - _mxMin);
+    calibratedData.y = 2 * MAG_SCALING_FACTOR * (data.y - _myMean) / (_myMax - _myMin);
+    calibratedData.z = 2 * MAG_SCALING_FACTOR * (data.z - _mzMean) / (_mzMax - _mzMin);
 
     return calibratedData;
 }
