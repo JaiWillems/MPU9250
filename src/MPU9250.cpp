@@ -77,8 +77,8 @@ void MPU9250::calibrateAccelGyro() {
     _ayOffset /= samples;
     _azOffset /= samples;
 
-    // Add 1G for gravity vector.
-    _azOffset -= ACCEL_SENSITIVITY_FACTOR;
+    // Subtract 1G so gravity vector is not calibrated out.
+    _azOffset -= 1;
 
     _gxOffset /= samples;
     _gyOffset /= samples;
@@ -133,9 +133,9 @@ Vector3D MPU9250::getAccel() {
     Vector3D data = getRawAccel();
 
     Vector3D calibratedData;
-    calibratedData.x = (data.x - _axOffset) / ACCEL_SENSITIVITY_FACTOR;
-    calibratedData.y = (data.y - _ayOffset) / ACCEL_SENSITIVITY_FACTOR;
-    calibratedData.z = (data.z - _azOffset) / ACCEL_SENSITIVITY_FACTOR;
+    calibratedData.x = data.x - _axOffset;
+    calibratedData.y = data.y - _ayOffset;
+    calibratedData.z = data.z - _azOffset;
 
     return calibratedData;
 }
@@ -145,9 +145,9 @@ Vector3D MPU9250::getRawAccel() {
     readBytes(MPU9250_I2C_ADDRESS, ACCEL_XOUT_H, 6, buffer);
 
     Vector3D data;
-    data.x = buffer[0] << 8 | buffer[1];
-    data.y = buffer[2] << 8 | buffer[3];
-    data.z = buffer[4] << 8 | buffer[5];
+    data.x = (buffer[0] << 8 | buffer[1]) / ACCEL_SENSITIVITY_FACTOR;
+    data.y = (buffer[2] << 8 | buffer[3]) / ACCEL_SENSITIVITY_FACTOR;
+    data.z = (buffer[4] << 8 | buffer[5]) / ACCEL_SENSITIVITY_FACTOR;
 
     return data;
 }
@@ -156,9 +156,9 @@ Vector3D MPU9250::getGyro() {
     Vector3D data = getRawGyro();
 
     Vector3D calibratedData;
-    calibratedData.x = (data.x - _gxOffset) / GYRO_SENSITIVITY_FACTOR;
-    calibratedData.y = (data.y - _gyOffset) / GYRO_SENSITIVITY_FACTOR;
-    calibratedData.z = (data.z - _gzOffset) / GYRO_SENSITIVITY_FACTOR;
+    calibratedData.x = data.x - _gxOffset;
+    calibratedData.y = data.y - _gyOffset;
+    calibratedData.z = data.z - _gzOffset;
 
     return calibratedData;
 }
@@ -168,9 +168,9 @@ Vector3D MPU9250::getRawGyro() {
     readBytes(MPU9250_I2C_ADDRESS, GYRO_XOUT_H, 6, buffer);
 
     Vector3D data;
-    data.x = buffer[0] << 8 | buffer[1];
-    data.y = buffer[2] << 8 | buffer[3];
-    data.z = buffer[4] << 8 | buffer[5];
+    data.x = (buffer[0] << 8 | buffer[1]) / GYRO_SENSITIVITY_FACTOR;
+    data.y = (buffer[2] << 8 | buffer[3]) / GYRO_SENSITIVITY_FACTOR;
+    data.z = (buffer[4] << 8 | buffer[5]) / GYRO_SENSITIVITY_FACTOR;
 
     return data;
 }
@@ -179,9 +179,9 @@ Vector3D MPU9250::getMag() {
     Vector3D data = getRawMag();
 
     Vector3D calibratedData;
-    calibratedData.x = 2 * MAG_SCALING_FACTOR * (data.x - _mxMean) / (_mxMax - _mxMin);
-    calibratedData.y = 2 * MAG_SCALING_FACTOR * (data.y - _myMean) / (_myMax - _myMin);
-    calibratedData.z = 2 * MAG_SCALING_FACTOR * (data.z - _mzMean) / (_mzMax - _mzMin);
+    calibratedData.x = 2 * (data.x - _mxMean) / (_mxMax - _mxMin);
+    calibratedData.y = 2 * (data.y - _myMean) / (_myMax - _myMin);
+    calibratedData.z = 2 * (data.z - _mzMean) / (_mzMax - _mzMin);
 
     return calibratedData;
 }
@@ -191,9 +191,9 @@ Vector3D MPU9250::getRawMag() {
     readBytes(AK8963_I2C_ADDRESS, MAG_XOUT_L, 7, buffer);
 
     Vector3D data;
-    data.x = buffer[0] | buffer[1] << 8;
-    data.y = buffer[2] | buffer[3] << 8;
-    data.z = buffer[4] | buffer[5] << 8;
+    data.x = MAG_SCALING_FACTOR * (buffer[0] | buffer[1] << 8);
+    data.y = MAG_SCALING_FACTOR * (buffer[2] | buffer[3] << 8);
+    data.z = MAG_SCALING_FACTOR * (buffer[4] | buffer[5] << 8);
 
     // TODO: Check overflow byte (byte 7, register 0x09).
 

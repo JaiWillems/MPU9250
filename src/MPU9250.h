@@ -86,13 +86,13 @@ class MPU9250 {
         Vector3D getMag();
         Vector3D getRawMag();
     private:
-        long _axOffset;
-        long _ayOffset;
-        long _azOffset;
-        long _gxOffset;
-        long _gyOffset;
-        long _gzOffset;
-        long _mxMean;
+        float _axOffset;
+        float _ayOffset;
+        float _azOffset;
+        float _gxOffset;
+        float _gyOffset;
+        float _gzOffset;
+        float _mxMean;
         int16_t _mxMin;
         int16_t _mxMax;
         long _myMean;
