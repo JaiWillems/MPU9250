@@ -31,6 +31,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "MPU9250.h"
 
+Vector3D NULL_VECTOR_OFFSET = {
+    .x = 0.0,
+    .y = 0.0,
+    .z = 0.0
+};
+Matrix3x3 NULL_MATRIX_OFFSET = {
+    .m11 = 1.0,
+    .m12 = 0.0,
+    .m13 = 0.0,
+    .m21 = 0.0,
+    .m22 = 1.0,
+    .m23 = 0.0,
+    .m31 = 0.0,
+    .m32 = 0.0,
+    .m33 = 1.0
+};
+
 void MPU9250::setup() {
     Wire.begin();
 
@@ -57,60 +74,45 @@ void MPU9250::setup() {
 
     writeByte(AK8963_I2C_ADDRESS, CNTL1, 0x16);
     delay(10);
+
+    _aOffset = NULL_VECTOR_OFFSET;
+    _gOffset = NULL_VECTOR_OFFSET;
+    _mHardIronOffset = NULL_VECTOR_OFFSET;
+    _mSoftIronOffset = NULL_MATRIX_OFFSET;
 }
 
 void MPU9250::calibrateAccelGyro() {
     int samples = NUMBER_OF_CALIBRATION_SAMPLES;
     for (int i = 0; i < samples; i++) {
         Vector3D accelData = getRawAccel();
-        _axOffset += accelData.x;
-        _ayOffset += accelData.y;
-        _azOffset += accelData.z;
+        _aOffset.x += accelData.x;
+        _aOffset.y += accelData.y;
+        _aOffset.z += accelData.z;
 
         Vector3D gyroData = getRawGyro();
-        _gxOffset += gyroData.x;
-        _gyOffset += gyroData.y;
-        _gzOffset += gyroData.z;
+        _gOffset.x += gyroData.x;
+        _gOffset.y += gyroData.y;
+        _gOffset.z += gyroData.z;
     }
 
-    _axOffset /= samples;
-    _ayOffset /= samples;
-    _azOffset /= samples;
+    _aOffset.x /= samples;
+    _aOffset.y /= samples;
+    _aOffset.z /= samples;
 
     // Subtract 1G so gravity vector is not calibrated out.
-    _azOffset -= 1;
+    _aOffset.z -= 1;
 
-    _gxOffset /= samples;
-    _gyOffset /= samples;
-    _gzOffset /= samples;
+    _gOffset.x /= samples;
+    _gOffset.y /= samples;
+    _gOffset.z /= samples;
 }
 
-void MPU9250::calibrateMag() {
-    uint16_t samples = 0;
-    unsigned long startTime = millis();
-    while (millis() - startTime < MAG_CALIBRATION_TIME_MS) {
-        Vector3D data = getRawMag();
-
-        _mxMean += data.x;
-        if (data.x < _mxMin) _mxMin = data.x;
-        if (data.x > _mxMax) _mxMax = data.x;
-
-        _myMean += data.y;
-        if (data.y < _myMin) _myMin = data.y;
-        if (data.y > _myMax) _myMax = data.y;
-
-        _mzMean += data.z;
-        if (data.z < _mzMin) _mzMin = data.z;
-        if (data.z > _mzMax) _mzMax = data.z;
-
-        samples += 1;
-
-        delay(10);
-    }
-
-    _mxMean /= samples;
-    _myMean /= samples;
-    _mzMean /= samples;
+void MPU9250::setMagOffsets(
+    Vector3D hardIronOffset,
+    Matrix3x3 softIronOffset
+) {
+    _mHardIronOffset = hardIronOffset;
+    _mSoftIronOffset = softIronOffset;
 }
 
 // TODO: Add tilt-compensation of move to a quaternion compass.
@@ -133,9 +135,9 @@ Vector3D MPU9250::getAccel() {
     Vector3D data = getRawAccel();
 
     Vector3D calibratedData;
-    calibratedData.x = data.x - _axOffset;
-    calibratedData.y = data.y - _ayOffset;
-    calibratedData.z = data.z - _azOffset;
+    calibratedData.x = data.x - _aOffset.x;
+    calibratedData.y = data.y - _aOffset.y;
+    calibratedData.z = data.z - _aOffset.z;
 
     return calibratedData;
 }
@@ -156,9 +158,9 @@ Vector3D MPU9250::getGyro() {
     Vector3D data = getRawGyro();
 
     Vector3D calibratedData;
-    calibratedData.x = data.x - _gxOffset;
-    calibratedData.y = data.y - _gyOffset;
-    calibratedData.z = data.z - _gzOffset;
+    calibratedData.x = data.x - _gOffset.x;
+    calibratedData.y = data.y - _gOffset.y;
+    calibratedData.z = data.z - _gOffset.z;
 
     return calibratedData;
 }
@@ -177,11 +179,16 @@ Vector3D MPU9250::getRawGyro() {
 
 Vector3D MPU9250::getMag() {
     Vector3D data = getRawMag();
+    float x = data.x - _mHardIronOffset.x;
+    float y = data.y - _mHardIronOffset.y;
+    float z = data.z - _mHardIronOffset.z;
+
+    Matrix3x3 s = _mSoftIronOffset;
 
     Vector3D calibratedData;
-    calibratedData.x = 2 * (data.x - _mxMean) / (_mxMax - _mxMin);
-    calibratedData.y = 2 * (data.y - _myMean) / (_myMax - _myMin);
-    calibratedData.z = 2 * (data.z - _mzMean) / (_mzMax - _mzMin);
+    calibratedData.x = s.m11 * x + s.m12 * y + s.m13 * z;
+    calibratedData.y = s.m21 * x + s.m22 * y + s.m23 * z;
+    calibratedData.z = s.m31 * x + s.m32 * y + s.m33 * z;
 
     return calibratedData;
 }

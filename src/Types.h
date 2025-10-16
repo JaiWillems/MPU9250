@@ -36,4 +36,10 @@ struct Vector3D {
     float x, y, z;
 };
 
+struct Matrix3x3 {
+   float m11, m12, m13;
+   float m21, m22, m23;
+   float m31, m32, m33;
+};
+
 #endif

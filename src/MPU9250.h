@@ -75,32 +75,24 @@ class MPU9250 {
     public:
         void setup();
         void calibrateAccelGyro();
-        void calibrateMag();
+        void setMagOffsets(
+            Vector3D hardIronOffset,
+            Matrix3x3 softIronOffset
+        );
         float getYaw();
         float getPitch();
         float getRoll();
         Vector3D getAccel();
-        Vector3D getRawAccel();
         Vector3D getGyro();
-        Vector3D getRawGyro();
         Vector3D getMag();
-        Vector3D getRawMag();
     private:
-        float _axOffset;
-        float _ayOffset;
-        float _azOffset;
-        float _gxOffset;
-        float _gyOffset;
-        float _gzOffset;
-        float _mxMean;
-        int16_t _mxMin;
-        int16_t _mxMax;
-        long _myMean;
-        int16_t _myMin;
-        int16_t _myMax;
-        long _mzMean;
-        int16_t _mzMin;
-        int16_t _mzMax;
+        Vector3D _aOffset;
+        Vector3D _gOffset;
+        Vector3D _mHardIronOffset;
+        Matrix3x3 _mSoftIronOffset;
+        Vector3D getRawAccel();
+        Vector3D getRawGyro();
+        Vector3D getRawMag();
         void writeByte(
             uint8_t i2cAddress,
             uint8_t registerAddress,
