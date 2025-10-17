@@ -115,20 +115,26 @@ void MPU9250::setMagOffsets(
     _mSoftIronOffset = softIronOffset;
 }
 
-// TODO: Add tilt-compensation of move to a quaternion compass.
 float MPU9250::getYaw() {
     Vector3D m = getMag();
-    return atan2(-m.y, m.x) * 180.0 / PI;
+
+    float pitch = DEG_TO_RAD * getPitch();
+    float roll = DEG_TO_RAD * getRoll();
+
+    return RAD_TO_DEG * atan2(
+        -m.y * cos(roll) + m.z * sin(roll),
+        m.x * cos(pitch) + m.y * sin(pitch) * sin(roll) + m.z * sin(pitch) * cos(roll)
+    );
 }
 
 float MPU9250::getPitch() {
     Vector3D a = getAccel();
-    return atan2(-a.x, sqrt(a.y * a.y + a.z * a.z)) * 180.0 / PI;
+    return RAD_TO_DEG * atan2(-a.x, sqrt(a.y * a.y + a.z * a.z));
 }
 
 float MPU9250::getRoll() {
     Vector3D a = getAccel();
-    return atan2(a.y, sqrt(a.x * a.x + a.z * a.z)) * 180.0 / PI;
+    return RAD_TO_DEG * atan2(a.y, a.z);
 }
 
 Vector3D MPU9250::getAccel() {
