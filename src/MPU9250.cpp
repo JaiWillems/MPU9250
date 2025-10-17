@@ -118,7 +118,7 @@ void MPU9250::setMagOffsets(
 // TODO: Add tilt-compensation of move to a quaternion compass.
 float MPU9250::getYaw() {
     Vector3D m = getMag();
-    return atan2(m.y, m.x) * 180.0 / PI;
+    return atan2(-m.y, m.x) * 180.0 / PI;
 }
 
 float MPU9250::getPitch() {
@@ -197,10 +197,16 @@ Vector3D MPU9250::getRawMag() {
     uint8_t buffer[7];
     readBytes(AK8963_I2C_ADDRESS, MAG_XOUT_L, 7, buffer);
 
+    // Magnetometer values in AK8963 frame.
+    float x = MAG_SCALING_FACTOR * (buffer[0] | buffer[1] << 8);
+    float y = MAG_SCALING_FACTOR * (buffer[2] | buffer[3] << 8);
+    float z = MAG_SCALING_FACTOR * (buffer[4] | buffer[5] << 8);
+
+    // Magnetometer values in MPU9250 frame.
     Vector3D data;
-    data.x = MAG_SCALING_FACTOR * (buffer[0] | buffer[1] << 8);
-    data.y = MAG_SCALING_FACTOR * (buffer[2] | buffer[3] << 8);
-    data.z = MAG_SCALING_FACTOR * (buffer[4] | buffer[5] << 8);
+    data.x = y; // AK8963 y-axis is aligned to MPU9250 x-axis.
+    data.y = x; // AK8963 x-axis is aligned to MPU9250 y-axis.
+    data.z = -z; // AK8963 z-axis is opposite to MPU9250 z-axis.
 
     // TODO: Check overflow byte (byte 7, register 0x09).
 
