@@ -1,0 +1,27 @@
+#########################################
+# Syntax Coloring Map For MPU9250 Library
+#########################################
+
+#########################################
+# Datatypes (KEYWORD1)
+#########################################
+
+Vector3D    KEYWORD1
+Matrix3x3   KEYWORD1
+Attitude    KEYWORD1
+MPU9250 KEYWORD1
+
+#########################################
+# Methods (KEYWORD2)
+#########################################
+
+begin   KEYWORD2
+calibrateAccelGyro  KEYWORD2
+setMagnetometerOffsets  KEYWORD2
+getYawPitchRoll KEYWORD2
+readAccelerometer   KEYWORD2
+readRawAccelerometer    KEYWORD2
+readGyroscope   KEYWORD2
+readRawGyroscope    KEYWORD2
+readMagnetometer    KEYWORD2
+readRawMagnetometer KEYWORD2
