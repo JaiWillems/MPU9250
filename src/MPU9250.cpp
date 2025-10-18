@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "Arduino.h"
 #include "MPU9250.h"
 
 Vector3D NULL_VECTOR_OFFSET = {
@@ -51,28 +52,60 @@ Matrix3x3 NULL_MATRIX_OFFSET = {
 void MPU9250::begin() {
     Wire.begin();
 
-    writeByte(MPU9250_I2C_ADDRESS, PWR_MGMT_1, 0x00);
+    writeByte(
+        MPU9250_I2C_ADDRESS,
+        MPU9250_PWR_MGMT_1,
+        0x00
+    );
     delay(100);
 
-    writeByte(MPU9250_I2C_ADDRESS, SMPLRT_DIV, 0x09);
+    writeByte(
+        MPU9250_I2C_ADDRESS,
+        MPU9250_SMPLRT_DIV,
+        0x09
+    );
     delay(10);
 
-    writeByte(MPU9250_I2C_ADDRESS, CONFIG, 0x03);
+    writeByte(
+        MPU9250_I2C_ADDRESS,
+        MPU9250_CONFIG,
+        0x03
+    );
     delay(10);
 
-    writeByte(MPU9250_I2C_ADDRESS, GYRO_CONFIG, 0x00);
+    writeByte(
+        MPU9250_I2C_ADDRESS,
+        MPU9250_GYRO_CONFIG,
+        0x00
+    );
     delay(10);
 
-    writeByte(MPU9250_I2C_ADDRESS, ACCEL_CONFIG, 0x00);
+    writeByte(
+        MPU9250_I2C_ADDRESS,
+        MPU9250_ACCEL_CONFIG,
+        0x00
+    );
     delay(10);
 
-    writeByte(MPU9250_I2C_ADDRESS, INT_PIN_CFG, 0x02);
+    writeByte(
+        MPU9250_I2C_ADDRESS,
+        MPU9250_INT_PIN_CFG,
+        0x02
+    );
     delay(10);
 
-    writeByte(AK8963_I2C_ADDRESS, CNTL1, 0x00);
+    writeByte(
+        AK8963_I2C_ADDRESS,
+        AK8963_CNTL1,
+        0x00
+    );
     delay(10);
 
-    writeByte(AK8963_I2C_ADDRESS, CNTL1, 0x16);
+    writeByte(
+        AK8963_I2C_ADDRESS,
+        AK8963_CNTL1,
+        0x16
+    );
     delay(10);
 
     _aOffset = NULL_VECTOR_OFFSET;
@@ -168,7 +201,7 @@ Vector3D MPU9250::readAccelerometer() {
 
 Vector3D MPU9250::readRawAccelerometer() {
     uint8_t buffer[6];
-    readBytes(MPU9250_I2C_ADDRESS, ACCEL_XOUT_H, 6, buffer);
+    readBytes(MPU9250_I2C_ADDRESS, MPU9250_ACCEL_XOUT_H, 6, buffer);
 
     Vector3D data;
     data.x = (buffer[0] << 8 | buffer[1]) / ACCEL_SENSITIVITY_FACTOR;
@@ -191,7 +224,7 @@ Vector3D MPU9250::readGyroscope() {
 
 Vector3D MPU9250::readRawGyroscope() {
     uint8_t buffer[6];
-    readBytes(MPU9250_I2C_ADDRESS, GYRO_XOUT_H, 6, buffer);
+    readBytes(MPU9250_I2C_ADDRESS, MPU9250_GYRO_XOUT_H, 6, buffer);
 
     Vector3D data;
     data.x = (buffer[0] << 8 | buffer[1]) / GYRO_SENSITIVITY_FACTOR;
@@ -219,7 +252,7 @@ Vector3D MPU9250::readMagnetometer() {
 
 Vector3D MPU9250::readRawMagnetometer() {
     uint8_t buffer[7];
-    readBytes(AK8963_I2C_ADDRESS, MAG_XOUT_L, 7, buffer);
+    readBytes(AK8963_I2C_ADDRESS, AK8963_MAG_XOUT_L, 7, buffer);
 
     // Magnetometer values in AK8963 frame.
     float x = MAG_SCALING_FACTOR * (buffer[0] | buffer[1] << 8);

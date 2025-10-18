@@ -29,35 +29,39 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <Arduino.h>
-#include <Wire.h>
-#include "Types.h"
+#ifndef MPU9250_h
+#define MPU9250_h
 
-// MPU9250 addresses.
+#include "Arduino.h"
+#include "Wire.h"
+
+/*
+* MPU9250 + AK8963 register addresses.
+*/
 
 #define MPU9250_I2C_ADDRESS 0x68
-#define PWR_MGMT_1 0x6B
-#define SMPLRT_DIV 0x19
-#define CONFIG 0x1A
-#define GYRO_CONFIG 0x1B
-#define ACCEL_CONFIG 0x1C
-#define INT_PIN_CFG 0x37
-#define ACCEL_XOUT_H 0x3B
-#define ACCEL_YOUT_H 0x3D
-#define ACCEL_ZOUT_H 0x3F
-#define GYRO_XOUT_H 0x43
-#define GYRO_YOUT_H 0x45
-#define GYRO_ZOUT_H 0x47
-
-// AK8963 addresses.
+#define MPU9250_PWR_MGMT_1 0x6B
+#define MPU9250_SMPLRT_DIV 0x19
+#define MPU9250_CONFIG 0x1A
+#define MPU9250_GYRO_CONFIG 0x1B
+#define MPU9250_ACCEL_CONFIG 0x1C
+#define MPU9250_INT_PIN_CFG 0x37
+#define MPU9250_ACCEL_XOUT_H 0x3B
+#define MPU9250_ACCEL_YOUT_H 0x3D
+#define MPU9250_ACCEL_ZOUT_H 0x3F
+#define MPU9250_GYRO_XOUT_H 0x43
+#define MPU9250_GYRO_YOUT_H 0x45
+#define MPU9250_GYRO_ZOUT_H 0x47
 
 #define AK8963_I2C_ADDRESS 0x0C
-#define CNTL1 0x0A
-#define MAG_XOUT_L 0x03
-#define MAG_YOUT_L 0x05
-#define MAG_ZOUT_L 0x07
+#define AK8963_CNTL1 0x0A
+#define AK8963_MAG_XOUT_L 0x03
+#define AK8963_MAG_YOUT_L 0x05
+#define AK8963_MAG_ZOUT_L 0x07
 
-// Other.
+/*
+* Macros.
+*/
 
 #define ACCEL_SENSITIVITY_FACTOR 16384.0
 #define GYRO_SENSITIVITY_FACTOR 131.0
@@ -65,6 +69,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NUMBER_OF_CALIBRATION_SAMPLES 100
 #define DEG_TO_RAD 0.01745
 #define RAD_TO_DEG 57.29578
+
+/*
+* Custom datatypes.
+*/
+
+struct Vector3D {
+    float x, y, z;
+};
+
+struct Matrix3x3 {
+   float m11, m12, m13;
+   float m21, m22, m23;
+   float m31, m32, m33;
+};
+
+struct Attitude {
+   float yaw, pitch, roll;
+};
+
+/*
+* MPU9250 class.
+*/
 
 class MPU9250 {
     public:
@@ -86,12 +112,8 @@ class MPU9250 {
         Vector3D _gOffset;
         Vector3D _mHardIronOffset;
         Matrix3x3 _mSoftIronOffset;
-        float getPitch(
-            Vector3D accel
-        );
-        float getRoll(
-            Vector3D accel
-        );
+        float getPitch(Vector3D accel);
+        float getRoll(Vector3D accel);
         float getYaw(
             Vector3D mag,
             float pitch,
@@ -109,3 +131,5 @@ class MPU9250 {
             uint8_t* destination
         );
 };
+
+#endif
