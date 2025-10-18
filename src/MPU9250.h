@@ -57,7 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAG_YOUT_L 0x05
 #define MAG_ZOUT_L 0x07
 
-// Settings.
+// Other.
 
 #define ACCEL_SENSITIVITY_FACTOR 16384.0
 #define GYRO_SENSITIVITY_FACTOR 131.0
@@ -68,34 +68,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class MPU9250 {
     public:
-        void setup();
+        void begin();
         void calibrateAccelGyro();
-        void setMagOffsets(
+        void setMagnetometerOffsets(
             Vector3D hardIronOffset,
             Matrix3x3 softIronOffset
         );
-        float getYaw();
-        float getPitch();
-        float getRoll();
-        Vector3D getAccel();
-        Vector3D getGyro();
-        Vector3D getMag();
+        Attitude getYawPitchRoll();
+        Vector3D readAccelerometer();
+        Vector3D readRawAccelerometer();
+        Vector3D readGyroscope();
+        Vector3D readRawGyroscope();
+        Vector3D readMagnetometer();
+        Vector3D readRawMagnetometer();
     private:
         Vector3D _aOffset;
         Vector3D _gOffset;
         Vector3D _mHardIronOffset;
         Matrix3x3 _mSoftIronOffset;
-        Vector3D getRawAccel();
-        Vector3D getRawGyro();
-        Vector3D getRawMag();
+        float getPitch(
+            Vector3D accel
+        );
+        float getRoll(
+            Vector3D accel
+        );
+        float getYaw(
+            Vector3D mag,
+            float pitch,
+            float roll
+        );
         void writeByte(
-            uint8_t i2cAddress,
-            uint8_t registerAddress,
+            uint8_t i2cAddr,
+            uint8_t registerAddr,
             int16_t data
         );
         void readBytes(
-            uint8_t i2cAddress,
-            uint8_t registerAddress,
+            uint8_t i2cAddr,
+            uint8_t registerAddr,
             uint8_t numberOfBytes,
             uint8_t* destination
         );

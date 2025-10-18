@@ -42,4 +42,8 @@ struct Matrix3x3 {
    float m31, m32, m33;
 };
 
+struct Attitude {
+   float yaw, pitch, roll;
+};
+
 #endif

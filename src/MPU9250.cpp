@@ -48,7 +48,7 @@ Matrix3x3 NULL_MATRIX_OFFSET = {
     .m33 = 1.0
 };
 
-void MPU9250::setup() {
+void MPU9250::begin() {
     Wire.begin();
 
     writeByte(MPU9250_I2C_ADDRESS, PWR_MGMT_1, 0x00);
@@ -84,12 +84,12 @@ void MPU9250::setup() {
 void MPU9250::calibrateAccelGyro() {
     int samples = NUMBER_OF_CALIBRATION_SAMPLES;
     for (int i = 0; i < samples; i++) {
-        Vector3D accelData = getRawAccel();
+        Vector3D accelData = readRawAccelerometer();
         _aOffset.x += accelData.x;
         _aOffset.y += accelData.y;
         _aOffset.z += accelData.z;
 
-        Vector3D gyroData = getRawGyro();
+        Vector3D gyroData = readRawGyroscope();
         _gOffset.x += gyroData.x;
         _gOffset.y += gyroData.y;
         _gOffset.z += gyroData.z;
@@ -107,7 +107,7 @@ void MPU9250::calibrateAccelGyro() {
     _gOffset.z /= samples;
 }
 
-void MPU9250::setMagOffsets(
+void MPU9250::setMagnetometerOffsets(
     Vector3D hardIronOffset,
     Matrix3x3 softIronOffset
 ) {
@@ -115,30 +115,48 @@ void MPU9250::setMagOffsets(
     _mSoftIronOffset = softIronOffset;
 }
 
-float MPU9250::getYaw() {
-    Vector3D m = getMag();
+Attitude MPU9250::getYawPitchRoll() {
+    Vector3D a = readAccelerometer();
+    Vector3D m = readMagnetometer();
 
-    float pitch = DEG_TO_RAD * getPitch();
-    float roll = DEG_TO_RAD * getRoll();
+    float pitch = getPitch(a);
+    float roll = getRoll(a);
 
-    return RAD_TO_DEG * atan2(
-        -m.y * cos(roll) + m.z * sin(roll),
-        m.x * cos(pitch) + m.y * sin(pitch) * sin(roll) + m.z * sin(pitch) * cos(roll)
+    Attitude attitude;
+    attitude.pitch = RAD_TO_DEG * pitch;
+    attitude.roll = RAD_TO_DEG * roll;
+    attitude.yaw = RAD_TO_DEG * getYaw(m, pitch, roll);
+
+    return attitude;
+}
+
+float MPU9250::getPitch(
+    Vector3D accel
+) {
+    return atan2(
+        -accel.x,
+        sqrt(accel.y * accel.y + accel.z * accel.z));
+}
+
+float MPU9250::getRoll(
+    Vector3D accel
+) {
+    return atan2(accel.y, accel.z);
+}
+
+float MPU9250::getYaw(
+    Vector3D mag,
+    float pitch,
+    float roll
+) {
+    return atan2(
+        -mag.y * cos(roll) + mag.z * sin(roll),
+        mag.x * cos(pitch) + mag.y * sin(pitch) * sin(roll) + mag.z * sin(pitch) * cos(roll)
     );
 }
 
-float MPU9250::getPitch() {
-    Vector3D a = getAccel();
-    return RAD_TO_DEG * atan2(-a.x, sqrt(a.y * a.y + a.z * a.z));
-}
-
-float MPU9250::getRoll() {
-    Vector3D a = getAccel();
-    return RAD_TO_DEG * atan2(a.y, a.z);
-}
-
-Vector3D MPU9250::getAccel() {
-    Vector3D data = getRawAccel();
+Vector3D MPU9250::readAccelerometer() {
+    Vector3D data = readRawAccelerometer();
 
     Vector3D calibratedData;
     calibratedData.x = data.x - _aOffset.x;
@@ -148,7 +166,7 @@ Vector3D MPU9250::getAccel() {
     return calibratedData;
 }
 
-Vector3D MPU9250::getRawAccel() {
+Vector3D MPU9250::readRawAccelerometer() {
     uint8_t buffer[6];
     readBytes(MPU9250_I2C_ADDRESS, ACCEL_XOUT_H, 6, buffer);
 
@@ -160,8 +178,8 @@ Vector3D MPU9250::getRawAccel() {
     return data;
 }
 
-Vector3D MPU9250::getGyro() {
-    Vector3D data = getRawGyro();
+Vector3D MPU9250::readGyroscope() {
+    Vector3D data = readRawGyroscope();
 
     Vector3D calibratedData;
     calibratedData.x = data.x - _gOffset.x;
@@ -171,7 +189,7 @@ Vector3D MPU9250::getGyro() {
     return calibratedData;
 }
 
-Vector3D MPU9250::getRawGyro() {
+Vector3D MPU9250::readRawGyroscope() {
     uint8_t buffer[6];
     readBytes(MPU9250_I2C_ADDRESS, GYRO_XOUT_H, 6, buffer);
 
@@ -183,8 +201,8 @@ Vector3D MPU9250::getRawGyro() {
     return data;
 }
 
-Vector3D MPU9250::getMag() {
-    Vector3D data = getRawMag();
+Vector3D MPU9250::readMagnetometer() {
+    Vector3D data = readRawMagnetometer();
     float x = data.x - _mHardIronOffset.x;
     float y = data.y - _mHardIronOffset.y;
     float z = data.z - _mHardIronOffset.z;
@@ -199,7 +217,7 @@ Vector3D MPU9250::getMag() {
     return calibratedData;
 }
 
-Vector3D MPU9250::getRawMag() {
+Vector3D MPU9250::readRawMagnetometer() {
     uint8_t buffer[7];
     readBytes(AK8963_I2C_ADDRESS, MAG_XOUT_L, 7, buffer);
 

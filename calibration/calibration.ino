@@ -38,13 +38,13 @@ void setup() {
 	// Baud rate used by the Motion Sensor Calibration Tool.
     Serial.begin(115200);
 
-    mpu.setup();
+    mpu.begin();
 }
 
 void loop() {
-	Vector3D a = mpu.getAccel();
-	Vector3D g = mpu.getGyro();
-	Vector3D m = mpu.getMag();
+	Vector3D a = mpu.readAccelerometer();
+	Vector3D g = mpu.readGyroscope();
+	Vector3D m = mpu.readMagnetometer();
 
 	// Serial format required by the Motion Sensor Calibration Tool.
     Serial.print("Raw:");
